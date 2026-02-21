@@ -149,6 +149,18 @@ After cloning all workflows, note down each new workflow's ID — you'll need th
 
 WOS properties on Contact and Company objects are shared across all clients in a HubSpot portal. They only need to be created once.
 
+**Automated approach (recommended):** Run the verification script:
+
+```bash
+# Verify only (dry run) — shows which properties exist / are missing
+python scripts/verify_hubspot_properties.py --token "pat-xxx"
+
+# Verify + create any missing properties
+python scripts/verify_hubspot_properties.py --token "pat-xxx" --create
+```
+
+You can also set `HUBSPOT_TOKEN` as an environment variable instead of passing `--token`.
+
 **Check if these already exist. If not, create them:**
 
 **Contact properties (11):**
