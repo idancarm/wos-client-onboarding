@@ -43,6 +43,18 @@ The steps below must be followed in order — later steps depend on earlier ones
 
 Collect all required information before touching any system. This prevents partial setups.
 
+**Automated approach (recommended):** Run the config generator to create a structured config file:
+
+```bash
+# Interactive mode — prompts for all fields, writes JSON config + .env template
+python scripts/generate_client_config.py
+
+# Validate an existing config + env pair
+python scripts/generate_client_config.py --validate --prefix ACM
+```
+
+Non-sensitive info (company, prefix, operators, personas) goes into `configs/{PREFIX}-client-config.json`. Credentials go into `configs/{PREFIX}.env` (gitignored). Copy `configs/.env.example` as a starting point for the env file.
+
 **Required from the client:**
 
 | Item | Example | Notes |
@@ -63,6 +75,14 @@ Collect all required information before touching any system. This prevents parti
 ### Step 2: Create n8n Data Tables
 
 Create 3 data tables in n8n. These store all client-specific configuration.
+
+**Automated approach (recommended):** If you generated a client config in Step 1, run the table setup script to get exact table specs and pre-filled row data:
+
+```bash
+python scripts/setup_n8n_tables.py --prefix ACM
+```
+
+This reads `configs/ACM-client-config.json` + `configs/ACM.env` and prints the table names, columns, and row data for all 3 tables. Create the tables in the n8n UI and enter the data shown.
 
 #### 2a. Credentials Table: `[PREFIX]-wos-credentials`
 

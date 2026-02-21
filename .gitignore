@@ -1,0 +1,8 @@
+# Client configs contain sensitive credentials
+configs/*.json
+configs/*.env
+!configs/.env.example
+!configs/.gitkeep
+
+# macOS
+.DS_Store
