@@ -2,8 +2,9 @@
 """
 Verify and create WOS HubSpot properties.
 
-Checks that all 14 required WOS properties exist on Contact (11) and Company (3)
-objects. Optionally creates any missing properties via the HubSpot API.
+Checks that all 15 required WOS properties exist on Contact (12) and Company (3)
+objects, grouped under the "envy_agent" property group. Optionally creates any
+missing properties (and the group itself) via the HubSpot API.
 
 Usage:
     # Verify only (dry run)
@@ -24,85 +25,127 @@ import requests
 
 BASE_URL = "https://api.hubapi.com/crm/v3/properties"
 
+# ── Property group ──────────────────────────────────────────────────────────
+
+GROUP_NAME = "envy_agent"
+GROUP_LABEL = "Envy Agent"
+
 # ── Property definitions ────────────────────────────────────────────────────
+
+OUTREACH_STAGE_OPTIONS = [
+    {"value": "Invitation Scheduled", "label": "Invitation Scheduled"},
+    {"value": "Invitation Sent", "label": "Invitation Sent"},
+    {"value": "Connected", "label": "Connected"},
+    {"value": "Sequence In Progress", "label": "Sequence In Progress"},
+    {"value": "Sequence Finished", "label": "Sequence Finished"},
+    {"value": "Replied", "label": "Replied"},
+    {"value": "Do Not Contact", "label": "Do Not Contact"},
+]
+
+SEQUENCE_STATUS_OPTIONS = [
+    {"value": "In Progress", "label": "In Progress"},
+    {"value": "Finished", "label": "Finished"},
+    {"value": "Stopped (Replied)", "label": "Stopped (Replied)"},
+]
 
 CONTACT_PROPERTIES = [
     {
         "name": "wos_outreach_stage",
-        "type": "string",
-        "fieldType": "text",
+        "type": "enumeration",
+        "fieldType": "select",
         "label": "WOS Outreach Stage",
-        "groupName": "contactinformation",
+        "description": "Master status of the lead in the outreach flow",
+        "groupName": GROUP_NAME,
+        "options": OUTREACH_STAGE_OPTIONS,
     },
     {
         "name": "wos_sequence_status",
-        "type": "string",
-        "fieldType": "text",
+        "type": "enumeration",
+        "fieldType": "select",
         "label": "WOS Sequence Status",
-        "groupName": "contactinformation",
+        "description": "Status of the message sequence sent by WOS agent",
+        "groupName": GROUP_NAME,
+        "options": SEQUENCE_STATUS_OPTIONS,
     },
     {
         "name": "wos_sequence_name",
         "type": "string",
         "fieldType": "text",
         "label": "WOS Sequence Name",
-        "groupName": "contactinformation",
+        "description": "The name of the LinkedIn sequence that the agent manages",
+        "groupName": GROUP_NAME,
     },
     {
         "name": "wos_sequence_start_date",
         "type": "datetime",
         "fieldType": "date",
         "label": "WOS Sequence Start Date",
-        "groupName": "contactinformation",
+        "description": "When the sequence was triggered",
+        "groupName": GROUP_NAME,
     },
     {
         "name": "wos_user_id",
         "type": "string",
         "fieldType": "text",
         "label": "WOS User ID",
-        "groupName": "contactinformation",
+        "description": "HubSpot user ID of the operator running outreach for this contact",
+        "groupName": GROUP_NAME,
     },
     {
         "name": "wos_last_interaction_date",
         "type": "datetime",
         "fieldType": "date",
         "label": "WOS Last Interaction Date",
-        "groupName": "contactinformation",
+        "description": "Timestamp when the WOS agent last interacted with the lead",
+        "groupName": GROUP_NAME,
     },
     {
         "name": "wos_linkedin_url",
         "type": "string",
         "fieldType": "text",
         "label": "WOS LinkedIn URL",
-        "groupName": "contactinformation",
+        "description": "Full URL of the lead's LinkedIn profile",
+        "groupName": GROUP_NAME,
     },
     {
         "name": "wos_linkedin_id",
         "type": "string",
         "fieldType": "text",
         "label": "WOS LinkedIn ID",
-        "groupName": "contactinformation",
+        "description": "LinkedIn member ID of the lead",
+        "groupName": GROUP_NAME,
     },
     {
         "name": "wos_linkedin_connection_status",
         "type": "string",
         "fieldType": "text",
         "label": "WOS LinkedIn Connection Status",
-        "groupName": "contactinformation",
+        "description": "Current LinkedIn connection status with the lead",
+        "groupName": GROUP_NAME,
     },
     {
         "name": "wos_connection_accepted_date",
         "type": "datetime",
         "fieldType": "date",
         "label": "WOS Connection Accepted Date",
-        "groupName": "contactinformation",
+        "description": "Date when the LinkedIn connection invitation was accepted",
+        "groupName": GROUP_NAME,
     },
     {
-        "name": "n8n_initiate_li_message",
-        "type": "string",
-        "fieldType": "text",
-        "label": "n8n Initiate LI Message",
-        "groupName": "contactinformation",
+        "name": "wos_scheduled_invitation_date",
+        "type": "datetime",
+        "fieldType": "date",
+        "label": "WOS Scheduled Invitation Date",
+        "description": "Date when the LinkedIn invitation is scheduled to be sent",
+        "groupName": GROUP_NAME,
+    },
+    {
+        "name": "wos_last_date_work_email_enriched",
+        "type": "datetime",
+        "fieldType": "date",
+        "label": "WOS Last Date Work Email Enriched",
+        "description": "Date when the contact's work email was last enriched",
+        "groupName": GROUP_NAME,
     },
 ]
 
@@ -112,21 +155,24 @@ COMPANY_PROPERTIES = [
         "type": "datetime",
         "fieldType": "date",
         "label": "WOS Initiate LI Agent",
-        "groupName": "companyinformation",
+        "description": "Setting this fires the n8n webhook to process the company",
+        "groupName": GROUP_NAME,
     },
     {
         "name": "wos_persona",
         "type": "string",
         "fieldType": "text",
         "label": "WOS Persona",
-        "groupName": "companyinformation",
+        "description": "Identifier for the search persona the LI agent will use",
+        "groupName": GROUP_NAME,
     },
     {
         "name": "wos_user_id",
         "type": "string",
         "fieldType": "text",
         "label": "WOS User ID",
-        "groupName": "companyinformation",
+        "description": "HubSpot user ID of the operator handling this company",
+        "groupName": GROUP_NAME,
     },
 ]
 
@@ -151,6 +197,20 @@ def fetch_existing_properties(token: str, object_type: str) -> set[str]:
     resp = requests.get(url, headers=get_headers(token), timeout=30)
     resp.raise_for_status()
     return {p["name"] for p in resp.json().get("results", [])}
+
+
+def ensure_property_group(token: str, object_type: str) -> bool:
+    """Create the envy_agent property group on *object_type*. 409 means it exists."""
+    url = f"{BASE_URL}/{object_type}/groups"
+    payload = {"name": GROUP_NAME, "label": GROUP_LABEL}
+    resp = requests.post(url, headers=get_headers(token), json=payload, timeout=30)
+    if resp.status_code in (200, 201):
+        print(f"  Group '{GROUP_NAME}' created on {object_type}")
+        return True
+    if resp.status_code == 409:
+        return True
+    print(f"  ERROR creating group on {object_type}: {resp.status_code} {resp.text}")
+    return False
 
 
 def create_property(token: str, object_type: str, prop: dict) -> bool:
@@ -185,6 +245,10 @@ def verify_and_create(token: str, do_create: bool) -> bool:
             print(f"  ERROR fetching {object_type} properties: {exc}")
             all_ok = False
             continue
+
+        missing = [p for p in specs if p["name"] not in existing]
+        if do_create and missing:
+            ensure_property_group(token, object_type)
 
         for prop in specs:
             name = prop["name"]
@@ -229,9 +293,10 @@ def main() -> None:
 
     ok = verify_and_create(args.token, args.create)
 
+    total = sum(len(specs) for specs in PROPERTY_SPECS.values())
     print(f"\n{'─' * 50}")
     if ok:
-        print("  All 14 WOS properties are present. ✓")
+        print(f"  All {total} WOS properties are present. ✓")
     elif not args.create:
         print("  Some properties are missing. Re-run with --create to fix.")
     else:

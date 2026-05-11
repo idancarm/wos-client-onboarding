@@ -181,11 +181,13 @@ python scripts/verify_hubspot_properties.py --token "pat-xxx" --create
 
 You can also set `HUBSPOT_TOKEN` as an environment variable instead of passing `--token`.
 
+All properties live under the `envy_agent` property group (label: "Envy Agent") on both Contact and Company objects. The `--create` flag will create the group automatically if needed.
+
 **Check if these already exist. If not, create them:**
 
-**Contact properties (11):**
-- `wos_outreach_stage` (single-line text)
-- `wos_sequence_status` (single-line text)
+**Contact properties (12):**
+- `wos_outreach_stage` (dropdown) — options: Invitation Scheduled, Invitation Sent, Connected, Sequence In Progress, Sequence Finished, Replied, Do Not Contact
+- `wos_sequence_status` (dropdown) — options: In Progress, Finished, Stopped (Replied)
 - `wos_sequence_name` (single-line text)
 - `wos_sequence_start_date` (date picker)
 - `wos_user_id` (single-line text)
@@ -194,7 +196,8 @@ You can also set `HUBSPOT_TOKEN` as an environment variable instead of passing `
 - `wos_linkedin_id` (single-line text)
 - `wos_linkedin_connection_status` (single-line text)
 - `wos_connection_accepted_date` (date picker)
-- `n8n_initiate_li_message` (single-line text)
+- `wos_scheduled_invitation_date` (date picker)
+- `wos_last_date_work_email_enriched` (date picker)
 
 **Company properties (3):**
 - `wos_process_company` (date picker) — label: "WOS Initiate LI Agent"
