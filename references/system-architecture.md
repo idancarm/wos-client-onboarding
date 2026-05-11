@@ -139,12 +139,14 @@ Tracks daily and weekly LinkedIn action counts per operator to enforce rate limi
 
 ## HubSpot Properties
 
-### Contact Properties (11 WOS fields)
+All WOS properties live under the `envy_agent` property group (label: "Envy Agent") on both Contact and Company objects.
+
+### Contact Properties (12 WOS fields)
 
 | Property Name | Type | Label | Purpose |
 |--------------|------|-------|---------|
-| wos_outreach_stage | string | WOS Outreach Stage | Master lead status in outreach flow |
-| wos_sequence_status | string | WOS Sequence Status | "In Progress" / "Finished" / "Stopped" |
+| wos_outreach_stage | enumeration | WOS Outreach Stage | Master lead status: Invitation Scheduled / Invitation Sent / Connected / Sequence In Progress / Sequence Finished / Replied / Do Not Contact |
+| wos_sequence_status | enumeration | WOS Sequence Status | In Progress / Finished / Stopped (Replied) |
 | wos_sequence_name | string | WOS Sequence Name | Name of active LinkedIn message sequence |
 | wos_sequence_start_date | datetime | WOS Sequence Start Date | When sequence was triggered |
 | wos_user_id | string | WOS User ID | Which operator is running outreach for this contact |
@@ -153,7 +155,8 @@ Tracks daily and weekly LinkedIn action counts per operator to enforce rate limi
 | wos_linkedin_id | string | WOS LinkedIn ID | Lead's LinkedIn member ID |
 | wos_linkedin_connection_status | string | WOS LinkedIn Connection Status | Current connection status |
 | wos_connection_accepted_date | datetime | WOS Connection Accepted Date | When invite was accepted |
-| n8n_initiate_li_message | string | n8n Initiate LI Message | Triggers LI message flow |
+| wos_scheduled_invitation_date | datetime | WOS Scheduled Invitation Date | When the LinkedIn invitation is scheduled to be sent |
+| wos_last_date_work_email_enriched | datetime | WOS Last Date Work Email Enriched | When the contact's work email was last enriched |
 
 ### Company Properties (3 WOS fields)
 
